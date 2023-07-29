@@ -48,7 +48,7 @@ https://github.com/elephantrobotics/myStudio/releases
 ## 部分案例介绍：
 1. 目前不同机型都有角度、坐标、夹爪控制，MyCobot320支持自适应夹爪与电动夹爪控制。<br>
 2. miniRobot：<br>
-myCobot280、320m5使用案例，可以进行零位校准、拖动示教、通讯等（在此基础上，使用RoboFlow、python、myblockly等控制机械臂）、信息获取（获取舵机 atom连接状态、以及basic、atom固件版本）。<br>
+MyCobot280、320m5、MechArm270-M5使用案例，可以进行零位校准、拖动示教、通讯等（在此基础上，使用RoboFlow、python、myblockly等控制机械臂）、信息获取（获取舵机 atom连接状态、以及basic、atom固件版本）。<br>
 3. Transponder：<br>
 myCobot280-Arduino uno和Mega2560开发板使用案例，功能主要是通讯，在此基础上，使用RoboFlow、python、myblockly等控制机械臂，进行io控制。<br>
 4. MyPalletizerRoboFlow：<br>
