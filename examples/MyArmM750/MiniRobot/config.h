@@ -4,14 +4,14 @@
 #include <MyCobotLanguage.h>
 #include "DisplayTemplate.h"
 
-#define TYPE "MyCobot"
+#define TYPE "MyArmM"
 
 enum FuncIndex : int {
     MAINCONTROL_INDEX = 0,
     CALIBRATION_INDEX,
     TRANSPONDER_INDEX,
     CONNECT_INDEX
-#if defined MyCobot_Pro_350
+#if defined MyCobot_Pro_350 || defined MyArm750
     ,
     FLASH_INDEX
 #endif

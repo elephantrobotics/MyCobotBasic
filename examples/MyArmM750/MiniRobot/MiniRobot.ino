@@ -93,7 +93,7 @@ void setup()
     adc_power_acquire();
 //    //start Robot
     delay(50);
-    Serial.begin(115200);
+    Serial.begin(1000000);
     myCobot.setup();
     delay(50);
     myCobot.powerOn();
@@ -115,7 +115,7 @@ void setup()
     M5.Lcd.setCursor(0,10);
     M5.Lcd.setTextColor(RED);
     M5.Lcd.println("wait for checking");
-    delay(20000);
+    delay(2000);
 
     M5.Lcd.clear(BLACK);
     menu_init();
@@ -184,7 +184,7 @@ void menu_init()
     menuMap.insert(std::make_pair(CALIBRATION_INDEX, "Calibration"));
     menuMap.insert(std::make_pair(TRANSPONDER_INDEX, "Transponder"));
     menuMap.insert(std::make_pair(CONNECT_INDEX, "Information"));
-#if defined MyCobot_Pro_350
+#if defined MyCobot_Pro_350 || defined MyArm750
     menuMap.insert(std::make_pair(FLASH_INDEX, "Flash"));
 #endif
 
@@ -192,7 +192,7 @@ void menu_init()
 
 void DisplayPos(int display_pos)
 {
-#if defined MyCobot_Pro_350
+#if defined MyCobot_Pro_350 || defined MyArm750
     M5.Lcd.fillRect(0, 70, 26, 120, BLACK);
 #else
     M5.Lcd.fillRect(0, 70, 26, 90, BLACK);
@@ -210,7 +210,7 @@ void DisplayAll()
     M5.Lcd.setTextSize(3);
     M5.Lcd.setTextColor(RED);
     M5.Lcd.setCursor(20, 10);
-    M5.Lcd.print("miniRoboFlow");
+    M5.Lcd.print("myArmMFlow");
 
     M5.Lcd.setTextSize(2);
     M5.Lcd.setCursor(250, 30);

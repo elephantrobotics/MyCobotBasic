@@ -2,7 +2,7 @@
  * @file EleGripperControl.ino
  * @author Elephant Robotics
  * @brief 
- * @version 1.0.0.0
+ * @version 2.0
  * @date 2023-07-28
  * 
  * @copyright Copyright (c) 2023
