@@ -15,7 +15,6 @@ void Calibration::run(MyCobotBasic &myCobot)
         if (M5.BtnA.wasReleased()) {
             if (!first_into) {
                 myCobot.setLEDRGB(255, 0, 0);
-                delay(200);
                 myCobot.releaseAllServos(1);
                 delay(100);
                 first_into = true;
@@ -43,7 +42,7 @@ void Calibration::DisplayHead(bool isClearAll)
     M5.Lcd.setTextColor(RED);
     M5.Lcd.setTextSize(3);
     M5.Lcd.setCursor(0, 10);
-    M5.Lcd.printf("myCobot");
+    M5.Lcd.printf("myArmM");
     M5.Lcd.setCursor(0, 40);
     M5.Lcd.drawFastHLine(0, 70, 320, GREY);
     M5.Lcd.setTextSize(3);
@@ -88,7 +87,7 @@ void Calibration::init(MyCobotBasic &myCobot)
         myCobot.focusServo(calibrate_servo_no);
         delay(100);
     }
-    if (calibrate_servo_no >= 6) {
+    if (calibrate_servo_no >= 8) {
         if (language == Chinese) {
             M5.Lcd.drawString("已经设置好所有舵机", 20, 20, 1);
         }
@@ -129,10 +128,10 @@ void Calibration::init(MyCobotBasic &myCobot)
         M5.Lcd.setCursor(235, 210);
         M5.Lcd.print(" EXIT ");
     }
-#if defined MyCobot_Pro_350
+#if defined MyCobot_Pro_350 || defined MyArm750
     myCobot.releaseServo(calibrate_servo_no);
 #endif
-    delay(1000);
+    delay(100);
 }
 
 /*
@@ -143,8 +142,8 @@ void Calibration::test(MyCobotBasic &myCobot)
     M5.Lcd.clear(BLACK);
     delay(50);
     // move all servos
-    if (calibrate_servo_no >= 6) {
-        for (int i = 1; i < 7; i ++) {
+    if (calibrate_servo_no >= 8) {
+        for (int i = 1; i < 9; i ++) {
             if (language == Chinese) {
                 M5.Lcd.drawString("已设置舵机零位 ", 20, 20, 1);
             }
@@ -157,11 +156,11 @@ void Calibration::test(MyCobotBasic &myCobot)
                 M5.Lcd.println(i);
             }
 
-            myCobot.setEncoder(i, 1848, 10);
+            myCobot.setEncoder(i, 1848);
             delay(2500);
-            myCobot.setEncoder(i, 2248, 10);
+            myCobot.setEncoder(i, 2000);
             delay(3000);
-            myCobot.setEncoder(i, 2048, 10);
+            myCobot.setEncoder(i, 2048);
             delay(2500);
         }
         Calibration::info();
@@ -201,7 +200,7 @@ void Calibration::reset(MyCobotBasic &myCobot)
         M5.Lcd.print("Exiting calibrate!!"); //Restart to
     }
     calibrate_servo_no = 0;
-    for (int i = 1; i < 7; ++i) {
+    for (int i = 1; i < 9; ++i) {
         myCobot.focusServo(i);
         delay(100);
     }

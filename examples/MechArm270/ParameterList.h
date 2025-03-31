@@ -3,7 +3,7 @@
 
 //默认mycobot，用哪一款机械臂，就打开注释，
 //#define MyCobot "mycobot"
-#define MechArm "mecharm"
+ #define MechArm "mecharm"
 //#define MyCobot_Pro "mycobot pro" //old mycobot320-2020 use
 // #define MyCobot_Pro_350 //new mycobot320 use
 

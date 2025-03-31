@@ -126,7 +126,7 @@ void Transponder::EventResponse(MyCobotBasic &myCobot)
                     while (true) {
                         M5.update();
                         if (M5.BtnC.wasReleased()) {
-                            myCobot.jogStop();
+                           myCobot.TaskStop();
                             data_power = false;
                             info();
                             break;
@@ -157,7 +157,7 @@ void Transponder::EventResponse(MyCobotBasic &myCobot)
                         }
                         //No click event response on timeout
                         if (M5.BtnC.wasReleased() && !is_timeout) {
-                            myCobot.jogStop();
+                            myCobot.TaskStop();
                             data_power = false;
                             info();
                             break;
@@ -220,7 +220,7 @@ void Transponder::EventResponse(MyCobotBasic &myCobot)
 
 #endif
                         if (M5.BtnC.wasReleased()) {
-                            myCobot.jogStop();
+                            myCobot.stop
                             data_power = false;
                             info();
                             break;
@@ -253,10 +253,14 @@ void Transponder::GetUserData(vector<unsigned char> &data)
 {
     if (transponder_mode == Uart) {
         while (Serial.available() > 0) {
+            if (data.size() > 200)
+                return;
             data.push_back((char)Serial.read());
         }
     } else if (transponder_mode == Wlan) {
         while (serverClients[0].available() > 0) {
+            if (data.size() > 200)
+                return;
             data.push_back((char)serverClients[0].read());
         }
     } else if (transponder_mode == Bt) {
@@ -285,10 +289,14 @@ void Transponder::GetUserData(string &data)
 {
     if (transponder_mode == Uart) {
         while (Serial.available() > 0) {
+            if (data.size() > 200)
+                return;
             data += (char)Serial.read();
         }
     } else if (transponder_mode == Wlan) {
         while (serverClients[0].available() > 0) {
+            if (data.size() > 200)
+                return;
             data += (char)serverClients[0].read();
         }
     } else if (transponder_mode == Bt) {
@@ -315,6 +323,9 @@ void Transponder::GetAtomData(vector<unsigned char> &data)
     }
 
     while (Serial2.available() > 0) {
+        //if data too many,will over size
+        if (data.size() > 200)
+            return;
         data.push_back(Serial2.read());
     }
     return;
@@ -333,6 +344,11 @@ bool Transponder::HandleOtherMsg(vector<unsigned char> &v_data)
                 case GET_BASIC_VERSION: {
                     v_data[2] = 0x03;
                     v_data.insert(v_data.end() - 1, SYSTEM_VERSION);
+                }
+                break;
+                case GET_COMMUNICATE_MODE: {
+                    v_data[2] = 0x03;
+                    v_data.insert(v_data.end() - 1, is_transparent_mode);
                 }
                 break;
                 case GET_TOF_DISTANCE: {
@@ -415,6 +431,15 @@ bool Transponder::HandleOtherMsg(vector<unsigned char> &v_data)
         case 3:
             switch (v_data[3]) {
                 case SET_COMMUNICATE_MODE: {
+#ifdef MyCobot_Pro_350
+                    /*int mode = 0;
+                    if (v_data[4] == 1)
+                        mode = 1;
+                    std::vector<uint8_t> cmd = {0xfe, 0xfe, 0x03, 0xd6, mode, 0xfa};
+                    SendDataToAtom(cmd);*/
+                    while(Serial2.read() != -1){}
+#endif
+                    Serial.println("ok--------------");
                     is_transparent_mode = v_data[4];
                 }
                 break;

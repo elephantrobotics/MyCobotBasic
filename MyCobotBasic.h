@@ -7,14 +7,16 @@
 #include <MyCobotSaver.h>
 
 #if defined MyCobot || defined MechArm
-#define SYSTEM_VERSION 23
+#define SYSTEM_VERSION 24
 #elif defined MyCobot_Pro
 #define SYSTEM_VERSION 10
 #elif defined MyCobot_Pro_350
-#define SYSTEM_VERSION 23
+#define SYSTEM_VERSION 24
+#elif defined MyArm750
+#define SYSTEM_VERSION 10
 #endif
 
-#if defined MyCobot || defined MechArm
+#if defined MyCobot || defined MechArm || defined MyArm750
 #define BAUD_RATE           1000000      //mycobot use
 #else
 #define BAUD_RATE            115200      //mycobot-pro use
@@ -79,10 +81,10 @@ public:
     void jogAngle(int joint, int direction,
                   int speed);  //Joint control, a joint moves in a certain direction until the robotic arm stops moving or reaches the limit
     void jogCoord(Axis axis, int direction, int speed);  //Coordinate control
-    void jogStop();  //JOg stop
+    //void jogStop();  //JOg stop
 
     //Encoder mode and operation
-    void setEncoder(int joint, int encoder);  //Send individual potential values
+    void setEncoder(int joint, int encoder, int speed);  //Send individual potential values
     int getEncoder(int joint);  //Get individual potential values
     void setEncoders(Angles angleEncoders, int speed);  //Send all potential values
     Angles getEncoders();  //Get all potential values
@@ -100,8 +102,8 @@ public:
 
 
     // Running Status and Settings
-    int getSpeed();  //read current speed4
-    void setSpeed(int percentage);  //set speed
+    //int getSpeed();  //read current speed4
+    //void setSpeed(int percentage);  //set speed
     float getJointMin(int joint);  //Read the joint minimum angle
     float getJointMax(int joint);  //Read the joint maximum angle
     //void setJointMin(int joint, float angle);
@@ -179,7 +181,14 @@ public:
                     end_type);  //Set the end coordinate system, parameter 1: 0-flange 1-tool (EndType::FLANGE is to set the end as the flange, EndType::TOOL is to set the end as the tool end)
     EndType getEndType();  //Get end coordinate system
 
+    //gripper control
+    void setGripperState(int state, int sp, int type );//Choose the gripper type and set gripper state
 
+    void setGripperState(int state, int sp, int type, int is_torque);//Choose the gripper, if is torque, the speed can be setted
+
+    void setGripperValue(int value, int sp, int type );//Choose the gripper type and set gripper value
+
+    void setGripperValue(int value, int sp, int type, int is_torque);//Choose the gripper, if is torque, the speed can be setted
 
 private:
     // communication

@@ -2,7 +2,7 @@
 
 
 typedef struct {
-    int joint_angle[6];
+    int joint_angle[8];
 } joint_angles_enc;
 
 int data_len_max = 2000;
@@ -73,12 +73,7 @@ void MainControl::run(MyCobotBasic &myCobot)
     //changePD(myCobot, 1);
 #endif
     //judge aysn or sysn
-    delay(100);
-    bool sync_temp;
-    sync_temp = myCobot.asynOrSync();
     sync = myCobot.asynOrSync();
-    if(sync_temp != sync)
-      sync = myCobot.asynOrSync();
     
     while (1) {
         M5.update();
@@ -130,8 +125,7 @@ void MainControl::updateMode(MyCobotBasic &myCobot, byte btn_pressed)
                 else
                     delay(100);
 #if defined MyCobot_Pro_350
-                //myCobot.releaseServo(1);
-                //myCobot.focusServo(1);
+                //myCobot.releaseServo(1);  //这里释放了一号舵机
                 //delay(100);
 #endif
                 break;
@@ -253,7 +247,7 @@ void MainControl::displayInfo(MyCobotBasic &myCobot, byte ui_mode)
         case Menu: {
             M5.Lcd.fillScreen(0);
             if (language == Chinese) {
-                M5.Lcd.drawString("  MyCobot-拖动示教", 20, 40, 1);
+                M5.Lcd.drawString("  MyArmM-拖动示教", 20, 40, 1);
                 M5.Lcd.drawString("播放", 60, buttom_y, 1);
                 M5.Lcd.drawString("录制", 160, buttom_y, 1);
                 M5.Lcd.drawString("退出", 260, buttom_y, 1);
@@ -264,7 +258,7 @@ void MainControl::displayInfo(MyCobotBasic &myCobot, byte ui_mode)
                 M5.Lcd.setTextColor(RED);
                 M5.Lcd.setTextSize(3);
                 M5.Lcd.setCursor(0, 10);
-                M5.Lcd.printf("myCobot");
+                M5.Lcd.printf("myArmM");
                 M5.Lcd.setCursor(0, 40);
                 M5.Lcd.drawFastHLine(0, 70, 320, GREY);
                 M5.Lcd.setTextSize(3);
@@ -497,9 +491,7 @@ void MainControl::record(MyCobotBasic &myCobot)
     rec_data_len = 0;
     Angles _data;
     int _encoder = 0;
-    gripper_state = myCobot.isServoEnabled(7);//重复判断
-    delay(50);
-    if (myCobot.isServoEnabled(7)) {
+    if (myCobot.isServoEnabled(8)) {
         gripper_state = true;
     } else {
         gripper_state = false;
@@ -510,8 +502,7 @@ void MainControl::record(MyCobotBasic &myCobot)
     Angles temp_speeds;
     Angles temp_back;
     int iswrite=0;
-    int gripper_temp;
-    int gripper_back;
+    bool flag = true;
     jae.clear();
     speeds.clear();
     __delay__time.clear();
@@ -532,11 +523,10 @@ void MainControl::record(MyCobotBasic &myCobot)
         //unsigned t_begin = millis();    
         if (sync) {
             temp_speeds = myCobot.getServoSpeeds();
-            delay(100);
-            // Serial.print("time1 = ");//测试录制时间用
-            // Serial.println(millis() - t_begin);//测试录制时间用
+            Serial.print("time1 = ");//测试录制时间用
+            Serial.println(millis() - t_begin);//测试录制时间用
             t_end=millis()-t_begin;
-            if(t_end >75000) break;
+            if(t_end >65000) break;
             #if defined MyCobot_Pro_350
                 delay(5);
             #else
@@ -545,15 +535,6 @@ void MainControl::record(MyCobotBasic &myCobot)
         }    
         //t_begin = millis(); 
         encoders = myCobot.getEncoders();
-        if (gripper_state) {
-        gripper_temp = myCobot.getGripperValue();
-#if defined MyCobot_Pro_350
-        delay(5);
-#else
-        delay(20);
-#endif
-        }
-        //Serial.print(jae.size());
         //Serial.print(encoders[1]);//这里是有更新的,但是到了下面就没有更新
         /*Serial.print("time2 = ");
         Serial.println(millis() - t_begin);*/
@@ -566,48 +547,38 @@ void MainControl::record(MyCobotBasic &myCobot)
         Serial.println(millis() - t_begin);*/
 //        Serial.print("speed == ");
         if(!__delay__time.empty()) delay_begin=delay_temp;//将上次点位的时间记录为本次间隔的起点时间
-//        Serial.print("begin == ");
-//        Serial.print(delay_begin);
-        for (int i = 0; i < 6; i++) {
+       // Serial.print("begin == ");
+       // Serial.print(delay_begin);
+       Serial.print(jae.size());
+        for (int i = 0; i < 8; i++) {
             if (M5.BtnA.wasReleased() || M5.BtnB.wasReleased()
                 || M5.BtnC.wasReleased()) break;
             if (sync) {
               if(encoders[i] > 0 && encoders[i]<4096 && temp_speeds[i] != -10000){
-                if(abs(encoders[i]-temp_back[i]) > 22 && (!jae.empty()) || abs(gripper_temp - gripper_back) > 1 ) iswrite=1;
+                if(abs(encoders[i]-temp_back[i]) > 22 && (!jae.empty()) ) iswrite=1;
               }else {
                   iswrite=0;  break;
                 }
-             } 
-            }
-              if(jae.empty()){//这是当没有数据时记录第一个点位当前的时间
-                jae.push_back(encoders);
-                speeds.push_back(temp_speeds);
-                __delay__time.push_back(t_end);
-                delay_temp=t_end;
-                temp_back=jae.back(); 
-                girrep_data.push_back(gripper_temp);
-                gripper_back = girrep_data.back();
-              }                           
-              
-              if(iswrite==1){//插入一条数据后,先不走这个地方,第二条再走                                                                                    
+             }
+            }                                                                          //插入当前时间,并记录该次时间,下次直接减去
+              if(jae.empty()){jae.push_back(encoders);speeds.push_back(temp_speeds);__delay__time.push_back(t_end);delay_temp=t_end;temp_back=jae.back();}//__delay__time.push_back(millis())
+              if(iswrite==1){//插入一条数据后,先不走这个地方,第二条再走                                                                                                               //这是当没有数据时记录第一个点位当前的时间
                 iswrite=0;
                 delay_temp=t_end;//本次间隔的终点
-//                 Serial.print("temp == ");
-//                 Serial.print(delay_temp);
+                // Serial.print("temp == ");
+                // Serial.print(delay_temp);
                 delay_time=delay_temp-delay_begin;//时间间隔等于当前时间减去上一个点位的时间
                 //------------------------------------------------------------//
-//                 Serial.print("delay_time ==");
-//                 Serial.print(delay_time);
+                // Serial.print("delay_time ==");
+                // Serial.print(delay_time);
                 //-------------------------------------------------------------//
                 __delay__time.push_back(delay_time);
                 jae.push_back(encoders);
                 temp_back=jae.back();
                 speeds.push_back(temp_speeds);
-                girrep_data.push_back(gripper_temp);
-                gripper_back = girrep_data.back();
                 //-------------------------------------------------------------------//
-//                 Serial.print("time == ");
-//                 Serial.print(__delay__time.back());
+                // Serial.print("time == ");
+                // Serial.print(__delay__time.back());
                 //-----------------------------------------------------------------------//
                 // for(int i=0;i<6;i++){
                 // Serial.print(" temp_back ==  ");
@@ -621,6 +592,19 @@ void MainControl::record(MyCobotBasic &myCobot)
             //  Serial.print(" ");
               }
         //Serial.println();
+        if (gripper_state) {
+            //unsigned long time = millis();
+            girrep_data.push_back(myCobot.getEncoder(7));                                              //  girrep_data[data_index] = myCobot.getEncoder(7);
+#if defined MyCobot_Pro_350
+        delay(5);
+#else
+        delay(20);
+#endif
+        /*time = millis() - time;
+        Serial.println(time);*/
+//            Serial.print("_encoder ");
+//            Serial.println(_encoder);
+        }
         //rec_data_len++;//取消,取决于容器大小
         data_index++;
     }
@@ -637,7 +621,7 @@ void MainControl::record(MyCobotBasic &myCobot)
       Serial.println();
     }*/
 //#endif
-    for (int i = 1; i < 7; ++i) {
+    for (int i = 1; i < 9; ++i) {
         myCobot.focusServo(i);
         delay(100);
     }
@@ -653,9 +637,9 @@ bool MainControl::IsInposition(MyCobotBasic &myCobot, Angles target_encoders, An
     Angles current_encoders = myCobot.getEncoders();
     //int EncodersEpsilon = 11;
     //int perc[3] = {source_encoders*0.05, source_encoders*0.1, 0.2};
-    float prec[6];
+    float prec[8];
     //判断是否到达点位 误差为1°--》11电位值 移动电位值>300才做判断 0.05x-->1 20 1-->11 300
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 8; i++) {
         /*Serial.print("current_encoders == ");
         Serial.print (current_encoders[i]);
         Serial.print("  target_encoders == ");
@@ -701,16 +685,14 @@ void MainControl::play(MyCobotBasic &myCobot)
                 myCobot.setEncoders(jae[index], 100);
             } else {          
                 if (index == 0) {
-                      delay(50);
                       myCobot.setEncodersDrag(jae[index], speeds[index]);
-                      delay(100);
+                      delay(5);
                       Angles source_encoders = myCobot.getEncoders();
-                      delay(50);
                       Angles move_encoders;
                       float temp_encoder = 0;
                       //float last_encoder = 0;
                       float max_encoder = 0;
-                      for (int i = 0; i < 6; i++) {
+                      for (int i = 0; i < 8; i++) {
                           temp_encoder = abs(~(int)(jae[index][i] - source_encoders[i]));
                           move_encoders[i] = temp_encoder;
                           if (temp_encoder > max_encoder)
@@ -723,20 +705,26 @@ void MainControl::play(MyCobotBasic &myCobot)
                           delay(60);
                       }*/
                   } else {
-                          delay(__delay__time[index]-100);
+                          delay(__delay__time[index]-20);
                           myCobot.setEncodersDrag(jae[index], speeds[index]);
-                          delay(10);
-                          if (gripper_state) {
-                              myCobot.setGripperValue(girrep_data[index],100);
-                             }
                   }
             }
 #if defined MyCobot_Pro_350
-                delay(10);
-else
-                delay(10);
+                delay(20);
+#else
+                if (!sync)
+                    delay(30);
+                else
+                    delay(74);
 #endif
-
+            if (gripper_state) {
+                myCobot.setEncoder(7, girrep_data[index]);
+#if defined MyCobot_Pro_350
+                delay(20);
+#else
+                delay(35);
+#endif
+            }
             /*for (int j = 0; j < 6; j++){
                 if (sync) {
                     Serial.print(speeds[index][j]);

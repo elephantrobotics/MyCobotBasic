@@ -739,14 +739,14 @@ void MyPalletizerBasic::jogCoord(MyPalletizerAxis axis, int direction,
     delay(WRITE_SERVO_GAP);
 }
 
-void MyPalletizerBasic::jogStop()
-{
-    mycobot_serial.write(header);
-    mycobot_serial.write(header);
-    mycobot_serial.write(JOG_STOP_LEN);
-    mycobot_serial.write(JOG_STOP);
-    mycobot_serial.write(footer);
-}
+// void MyPalletizerBasic::jogStop()
+// {
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(JOG_STOP_LEN);
+//     mycobot_serial.write(JOG_STOP);
+//     mycobot_serial.write(footer);
+// }
 
 void MyPalletizerBasic::setEncoder(int joint, int encoder)
 {
@@ -856,46 +856,46 @@ void MyPalletizerBasic::setEncoders(MyPalletizerEncoders angleEncoders,
     mycobot_serial.write(footer);
 }
 
-int MyPalletizerBasic::getSpeed()
-{
-    mycobot_serial.write(header);
-    mycobot_serial.write(header);
-    mycobot_serial.write(GET_SPEED_LEN);
-    mycobot_serial.write(GET_SPEED);
-    mycobot_serial.write(footer);
+// int MyPalletizerBasic::getSpeed()
+// {
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(GET_SPEED_LEN);
+//     mycobot_serial.write(GET_SPEED);
+//     mycobot_serial.write(footer);
 
-    unsigned long t_begin = millis();
-    void *tempPtr = nullptr;
-    int *pSpeed = nullptr;
-    int speed;
+//     unsigned long t_begin = millis();
+//     void *tempPtr = nullptr;
+//     int *pSpeed = nullptr;
+//     int speed;
 
-    while (true) {
-        if (millis() - t_begin > 40)
-            break;
-        tempPtr = readData();
-        if (tempPtr == nullptr)
-            continue;
-        else {
-            pSpeed = (int *)tempPtr;
-            speed = *pSpeed;
-            delete pSpeed;
-            return speed;
-        }
-    }
+//     while (true) {
+//         if (millis() - t_begin > 40)
+//             break;
+//         tempPtr = readData();
+//         if (tempPtr == nullptr)
+//             continue;
+//         else {
+//             pSpeed = (int *)tempPtr;
+//             speed = *pSpeed;
+//             delete pSpeed;
+//             return speed;
+//         }
+//     }
 
-    return -1;
-}
+//     return -1;
+// }
 
-void MyPalletizerBasic::setSpeed(int percentage)
-{
-    byte speed = percentage;
-    mycobot_serial.write(header);
-    mycobot_serial.write(header);
-    mycobot_serial.write(SET_SPEED_LEN);
-    mycobot_serial.write(SET_SPEED);
-    mycobot_serial.write(speed);
-    mycobot_serial.write(footer);
-}
+// void MyPalletizerBasic::setSpeed(int percentage)
+// {
+//     byte speed = percentage;
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(SET_SPEED_LEN);
+//     mycobot_serial.write(SET_SPEED);
+//     mycobot_serial.write(speed);
+//     mycobot_serial.write(footer);
+// }
 
 float MyPalletizerBasic::getFeedOverride()
 {
@@ -941,49 +941,49 @@ void MyPalletizerBasic::sendFeedOverride(float feed_override)
     mycobot_serial.write(footer);
 }
 
-float MyPalletizerBasic::getAcceleration()
-{
-    mycobot_serial.write(header);
-    mycobot_serial.write(header);
-    mycobot_serial.write(GET_ACCELERATION_LEN);
-    mycobot_serial.write(GET_ACCELERATION);
-    mycobot_serial.write(footer);
+// float MyPalletizerBasic::getAcceleration()
+// {
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(GET_ACCELERATION_LEN);
+//     mycobot_serial.write(GET_ACCELERATION);
+//     mycobot_serial.write(footer);
 
-    unsigned long t_begin = millis();
-    void *tempPtr = nullptr;
-    float *pAcceleration = nullptr;
-    float acceleration;
+//     unsigned long t_begin = millis();
+//     void *tempPtr = nullptr;
+//     float *pAcceleration = nullptr;
+//     float acceleration;
 
-    while (true) {
-        if (millis() - t_begin > 40)
-            break;
-        tempPtr = readData();
-        if (tempPtr == nullptr)
-            continue;
-        else {
-            pAcceleration = (float *)tempPtr;
-            acceleration = *pAcceleration;
-            delete pAcceleration;
-            return acceleration;
-        }
-    }
+//     while (true) {
+//         if (millis() - t_begin > 40)
+//             break;
+//         tempPtr = readData();
+//         if (tempPtr == nullptr)
+//             continue;
+//         else {
+//             pAcceleration = (float *)tempPtr;
+//             acceleration = *pAcceleration;
+//             delete pAcceleration;
+//             return acceleration;
+//         }
+//     }
 
-    return -1.0;
-}
+//     return -1.0;
+// }
 
-void MyPalletizerBasic::setAcceleration(float acceleration)
-{
-    byte acceleration_high = highByte(static_cast<int>(acceleration * 10));
-    byte acceleration_low = lowByte(static_cast<int>(acceleration * 10));
+// void MyPalletizerBasic::setAcceleration(float acceleration)
+// {
+//     byte acceleration_high = highByte(static_cast<int>(acceleration * 10));
+//     byte acceleration_low = lowByte(static_cast<int>(acceleration * 10));
 
-    mycobot_serial.write(header);
-    mycobot_serial.write(header);
-    mycobot_serial.write(SET_ACCELERATION_LEN);
-    mycobot_serial.write(SET_ACCELERATION);
-    mycobot_serial.write(acceleration_high);
-    mycobot_serial.write(acceleration_low);
-    mycobot_serial.write(footer);
-}
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(SET_ACCELERATION_LEN);
+//     mycobot_serial.write(SET_ACCELERATION);
+//     mycobot_serial.write(acceleration_high);
+//     mycobot_serial.write(acceleration_low);
+//     mycobot_serial.write(footer);
+// }
 
 float MyPalletizerBasic::getJointMin(int joint)
 {

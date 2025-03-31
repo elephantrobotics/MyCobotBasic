@@ -14,7 +14,7 @@
 #define footer                0xfa
 #define IO_TimeOut            120
 #define ITR_TIMES_MAX        4
-#define SYSTEM_VERSION 12
+#define SYSTEM_VERSION 13
 
 #define SEND_DATA_GAP         4
 #define WRITE_SERVO_GAP        20

@@ -22,7 +22,12 @@ static enum LAN : int {English = 1, Chinese} language = (enum LAN)1;
 
 #define HEADER 0XFE
 #define END 0XFA
+#define ATOM 1
+#define USER 2
 
+#define GET_COMMUNICATE_MODE 0xc3
+#define SET_COMMUNICATE_MODE 0xc2
+#define GET_BASIC_VERSION 0xc1
 #define GET_TOF_DISTANCE 0xc0
 #define SET_SSID_PWD 0XB0
 #define GET_SSID_PWD 0xb1

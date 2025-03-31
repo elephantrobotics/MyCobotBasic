@@ -5,11 +5,12 @@ typedef struct {
     int joint_angle[6];
 } joint_angles_enc;
 
-int data_len_max = 1000;
-Angles jae[1000];
-Angles speeds[1000];
+int data_len_max = 2000;
+std::vector<Angles> jae;
+std::vector<Angles> speeds;
+std::vector<int> __delay__time;
 
-int girrep_data[1000];
+std::vector<int> girrep_data;                             //int girrep_data[1400];
 
 // PIN 26 high -> loop play data from Flash
 byte control_pin = 26;   
@@ -67,9 +68,9 @@ void MainControl::run(MyCobotBasic &myCobot)
 
     //进入拖动示教时，先获取pdi并保持，然后将pdi改为10 0 1
 #ifdef MyCobot_Pro_350
-    getPDI(myCobot);
+    //getPDI(myCobot);
     delay(50);
-    changePD(myCobot, 1);
+    //changePD(myCobot, 1);
 #endif
     //judge aysn or sysn
     sync = myCobot.asynOrSync();
@@ -93,7 +94,7 @@ void MainControl::run(MyCobotBasic &myCobot)
             EXIT = false;
             #ifdef MyCobot_Pro_350
                 delay(50);
-                changePD(myCobot, 0);
+              //  changePD(myCobot, 0);
             #endif
             break;
         }
@@ -124,8 +125,9 @@ void MainControl::updateMode(MyCobotBasic &myCobot, byte btn_pressed)
                 else
                     delay(100);
 #if defined MyCobot_Pro_350
-                myCobot.releaseServo(1);
-                delay(100);
+                //myCobot.releaseServo(1);
+                //myCobot.focusServo(1);
+                //delay(100);
 #endif
                 break;
             case C:
@@ -144,12 +146,12 @@ void MainControl::updateMode(MyCobotBasic &myCobot, byte btn_pressed)
                 MainControl::play(myCobot); 
 
                 break;
-            case B:
-                ui = PlayFlash;
+            //case B:
+            //    ui = PlayFlash;
                 // play loop from flash
-                MainControl::playFromFlash(myCobot);
+            //    MainControl::playFromFlash(myCobot);
+            //    break;
 
-                break;
             case C:
                 ui = Menu;  
                 // get back
@@ -176,12 +178,12 @@ void MainControl::updateMode(MyCobotBasic &myCobot, byte btn_pressed)
                 MainControl::displayInfo(myCobot, ui);
                 break;
 
-            case B:
-                // record into ram as well
-                ui = RecordFlash;  
-                MainControl::displayInfo(myCobot, ui);
-                MainControl::recordIntoFlash(myCobot);
-                break;
+            // case B:
+            //     // record into ram as well
+            //     ui = RecordFlash;  
+            //     MainControl::displayInfo(myCobot, ui);
+            //     MainControl::recordIntoFlash(myCobot);
+            //     break;
             case C:
                 ui = Menu;
                 for (int i = 1; i < 7; ++i) {
@@ -193,7 +195,7 @@ void MainControl::updateMode(MyCobotBasic &myCobot, byte btn_pressed)
         }
     }
 
-    else if ((ui == PlayRam) || (ui == PlayFlash)) {
+        else if (ui == PlayRam) {                                                            //else if ((ui == PlayRam) || (ui == PlayFlash)) 
         switch (btn_pressed) {
             case A:
                 //Serial.println("Continue Play");
@@ -210,7 +212,7 @@ void MainControl::updateMode(MyCobotBasic &myCobot, byte btn_pressed)
         }
     }
 
-    else if ((ui == RecordRam) || (ui == RecordFlash)) {
+        else if (ui == RecordRam) {                                                              //=else if ((ui == RecordRam) || (ui == RecordFlash)) {
         switch (btn_pressed) {
             case B:
                 //Serial.println("Save and Stop");
@@ -280,15 +282,15 @@ void MainControl::displayInfo(MyCobotBasic &myCobot, byte ui_mode)
             if (language == Chinese) {
                 M5.Lcd.drawString(" 请选择示教路径的播放位置", 10, 40, 1);
                 M5.Lcd.drawString("缓存", 60, buttom_y, 1);
-                M5.Lcd.drawString("储存卡", 160, buttom_y, 1);
+                //M5.Lcd.drawString("储存卡", 160, buttom_y, 1);
                 M5.Lcd.drawString("返回", 260, buttom_y, 1);
             } else if (language == English) {
                 M5.Lcd.setCursor(20, 40);
                 M5.Lcd.print("Playing for Ram/Flash?");
                 M5.Lcd.setCursor(40, buttom_1y);
                 M5.Lcd.print("Ram");
-                M5.Lcd.setCursor(136, buttom_1y);
-                M5.Lcd.print("Flash");
+               // M5.Lcd.setCursor(136, buttom_1y);
+               // M5.Lcd.print("Flash");
                 M5.Lcd.setCursor(240, buttom_1y);
                 M5.Lcd.print("Back");
             }
@@ -300,15 +302,15 @@ void MainControl::displayInfo(MyCobotBasic &myCobot, byte ui_mode)
             if (language == Chinese) {
                 M5.Lcd.drawString(" 请选择示教视频储存路径", 20, 40, 1);
                 M5.Lcd.drawString("缓存", 60, buttom_y, 1);
-                M5.Lcd.drawString("储存卡", 160, buttom_y, 1);
+               // M5.Lcd.drawString("储存卡", 160, buttom_y, 1);
                 M5.Lcd.drawString("返回", 260, buttom_y, 1);
             } else if (language == English) {
                 M5.Lcd.setCursor(20, 40);
                 M5.Lcd.print("Recording to Ram/Flash?");
                 M5.Lcd.setCursor(40, buttom_1y);
                 M5.Lcd.print("Ram");
-                M5.Lcd.setCursor(136, buttom_1y);
-                M5.Lcd.print("Flash");
+              //  M5.Lcd.setCursor(136, buttom_1y);
+              //  M5.Lcd.print("Flash");
                 M5.Lcd.setCursor(240, buttom_1y);
                 M5.Lcd.print("Back");
             }
@@ -336,26 +338,26 @@ void MainControl::displayInfo(MyCobotBasic &myCobot, byte ui_mode)
             break;
         }
 
-        case PlayFlash: {
-            M5.Lcd.fillScreen(0);
-            if (language == Chinese) {
-                M5.Lcd.drawString(" 正在执行储存卡中的路径", 20, 40, 1);
-                M5.Lcd.drawString(" 播放中...", 20, 70, 1);
-                M5.Lcd.drawString("开始", 60, buttom_y, 1);
-                M5.Lcd.drawString("暂停", 160, buttom_y, 1);
-                M5.Lcd.drawString("结束", 260, buttom_y, 1);
-            } else if (language == English) {
-                M5.Lcd.setCursor(0, 40);
-                M5.Lcd.print(" Play from Flash/nPlaying");
-                M5.Lcd.setCursor(40, buttom_2y);
-                M5.Lcd.print("Play");
-                M5.Lcd.setCursor(130, buttom_2y);
-                M5.Lcd.print("Pause");
-                M5.Lcd.setCursor(230, buttom_2y);
-                M5.Lcd.print("Stop");
-            }
-            break;
-        }
+        // case PlayFlash: {
+        //     M5.Lcd.fillScreen(0);
+        //     if (language == Chinese) {
+        //         M5.Lcd.drawString(" 正在执行储存卡中的路径", 20, 40, 1);
+        //         M5.Lcd.drawString(" 播放中...", 20, 70, 1);
+        //         M5.Lcd.drawString("开始", 60, buttom_y, 1);
+        //         M5.Lcd.drawString("暂停", 160, buttom_y, 1);
+        //         M5.Lcd.drawString("结束", 260, buttom_y, 1);
+        //     } else if (language == English) {
+        //         M5.Lcd.setCursor(0, 40);
+        //         M5.Lcd.print(" Play from Flash/nPlaying");
+        //         M5.Lcd.setCursor(40, buttom_2y);
+        //         M5.Lcd.print("Play");
+        //         M5.Lcd.setCursor(130, buttom_2y);
+        //         M5.Lcd.print("Pause");
+        //         M5.Lcd.setCursor(230, buttom_2y);
+        //         M5.Lcd.print("Stop");
+        //     }
+        //     break;
+        //}
 
         case RecordRam: {
             M5.Lcd.fillScreen(0);
@@ -372,22 +374,22 @@ void MainControl::displayInfo(MyCobotBasic &myCobot, byte ui_mode)
             break;
         }
 
-        case RecordFlash: {
-            M5.Lcd.fillScreen(0);
-            if (language == Chinese) {
-                M5.Lcd.drawString(" 录制并存入储存卡", 20, 40, 1);
-                M5.Lcd.drawString(" 录制中...", 20, 70, 1);
-                M5.Lcd.drawString(" 停止录制并保存", 5, buttom_y, 1);
-            }
-            if (language == English) {
-                M5.Lcd.setCursor(0, 40);
-                M5.Lcd.print("Record into Flash\nRecording...");
-                M5.Lcd.setCursor(5, buttom_y);
-                M5.Lcd.print("Stop Recording and Save");
-            }
+        // case RecordFlash: {
+        //     M5.Lcd.fillScreen(0);
+        //     if (language == Chinese) {
+        //         M5.Lcd.drawString(" 录制并存入储存卡", 20, 40, 1);
+        //         M5.Lcd.drawString(" 录制中...", 20, 70, 1);
+        //         M5.Lcd.drawString(" 停止录制并保存", 5, buttom_y, 1);
+        //     }
+        //     if (language == English) {
+        //         M5.Lcd.setCursor(0, 40);
+        //         M5.Lcd.print("Record into Flash\nRecording...");
+        //         M5.Lcd.setCursor(5, buttom_y);
+        //         M5.Lcd.print("Stop Recording and Save");
+        //     }
 
-            break;
-        }
+        //     break;
+        // }
 
         case pause: { // Stop recording
             M5.Lcd.fillScreen(0);
@@ -420,27 +422,27 @@ void MainControl::displayInfo(MyCobotBasic &myCobot, byte ui_mode)
             break;
         }
 
-        case GDataFlash: { // Play from Flash
-            M5.Lcd.fillScreen(0);
-            if (language == Chinese) {
-                M5.Lcd.drawString("从储存卡中获取数据", 20, 40, 1);
-            } else if (language == English) {
-                M5.Lcd.setCursor(0, 40);
-                M5.Lcd.print("Getting data from Flash");
-            }
-            break;
-        }
+        // case GDataFlash: { // Play from Flash
+        //     M5.Lcd.fillScreen(0);
+        //     if (language == Chinese) {
+        //         M5.Lcd.drawString("从储存卡中获取数据", 20, 40, 1);
+        //     } else if (language == English) {
+        //         M5.Lcd.setCursor(0, 40);
+        //         M5.Lcd.print("Getting data from Flash");
+        //     }
+        //     break;
+        // }
 
-        case SDataFlash: { // Record from Flash
-            M5.Lcd.fillScreen(0);
-            if (language == Chinese) {
-                M5.Lcd.drawString("将数据保存到储存卡", 20, 40, 1);
-            } else if (language == English) {
-                M5.Lcd.setCursor(0, 40);
-                M5.Lcd.print("Saving Data into Flash");
-            }
-            break;
-        }
+        // case SDataFlash: { // Record from Flash
+        //     M5.Lcd.fillScreen(0);
+        //     if (language == Chinese) {
+        //         M5.Lcd.drawString("将数据保存到储存卡", 20, 40, 1);
+        //     } else if (language == English) {
+        //         M5.Lcd.setCursor(0, 40);
+        //         M5.Lcd.print("Saving Data into Flash");
+        //     }
+        //     break;
+        // }
 
         case IoState: { // loop play from sram
             M5.Lcd.fillScreen(0);
@@ -499,13 +501,22 @@ void MainControl::record(MyCobotBasic &myCobot)
 //    Serial.println(_encoder);
     Encoders encoders;
     Angles temp_speeds;
+    Angles temp_back;
+    int iswrite=0;
     bool flag = true;
+    jae.clear();
+    speeds.clear();
+    __delay__time.clear();
     delay(35);
     if (!sync) {
         delay(100);
     }
     int data_index = 0;
-    
+    unsigned t_begin = millis();
+    unsigned t_end;
+    int delay_begin=0;
+    int delay_time=0; 
+    int delay_temp=0;
     while (data_index < data_len_max) {
         M5.update();
         if (M5.BtnA.wasReleased() || M5.BtnB.wasReleased()
@@ -513,8 +524,10 @@ void MainControl::record(MyCobotBasic &myCobot)
         //unsigned t_begin = millis();    
         if (sync) {
             temp_speeds = myCobot.getServoSpeeds();
-            /*Serial.print("time1 = ");
-            Serial.println(millis() - t_begin);*/
+            Serial.print("time1 = ");//测试录制时间用
+            Serial.println(millis() - t_begin);//测试录制时间用
+            t_end=millis()-t_begin;
+            if(t_end >65000) break;
             #if defined MyCobot_Pro_350
                 delay(5);
             #else
@@ -523,6 +536,7 @@ void MainControl::record(MyCobotBasic &myCobot)
         }    
         //t_begin = millis(); 
         encoders = myCobot.getEncoders();
+        //Serial.print(encoders[1]);//这里是有更新的,但是到了下面就没有更新
         /*Serial.print("time2 = ");
         Serial.println(millis() - t_begin);*/
 #if defined MyCobot_Pro_350
@@ -532,31 +546,56 @@ void MainControl::record(MyCobotBasic &myCobot)
 #endif
         /*Serial.print("time = ");
         Serial.println(millis() - t_begin);*/
-//        Serial.print("speed == "); 
+//        Serial.print("speed == ");
+        if(!__delay__time.empty()) delay_begin=delay_temp;//将上次点位的时间记录为本次间隔的起点时间
+        Serial.print("begin == ");
+        Serial.print(delay_begin);
         for (int i = 0; i < 6; i++) {
             if (M5.BtnA.wasReleased() || M5.BtnB.wasReleased()
                 || M5.BtnC.wasReleased()) break;
             if (sync) {
-                if (temp_speeds[i] != -10000) {
-                    speeds[data_index] = temp_speeds;
-    //                Serial.print("speed == ");
-    //                Serial.print(temp_speeds[i]);
-    //                Serial.print(" ");
-                } else {
-                    continue;
+              if(encoders[i] > 0 && encoders[i]<4096 && temp_speeds[i] != -10000){
+                if(abs(encoders[i]-temp_back[i]) > 22 && (!jae.empty()) ) iswrite=1;
+              }else {
+                  iswrite=0;  break;
                 }
-            }
-            if (encoders[i] > 0 && encoders[i] < 4096) {
-                jae[data_index] = encoders;
-//                Serial.print(" encoder ==  ");
-//                Serial.print(encoders[i]);
-//                Serial.print(" ");
-            }
-        }
+             }
+ 
+            }                                                                          //插入当前时间,并记录该次时间,下次直接减去
+              if(jae.empty()){jae.push_back(encoders);speeds.push_back(temp_speeds);__delay__time.push_back(t_end);delay_temp=t_end;temp_back=jae.back();}//__delay__time.push_back(millis())
+              if(iswrite==1){//插入一条数据后,先不走这个地方,第二条再走                                                                                                               //这是当没有数据时记录第一个点位当前的时间
+                iswrite=0;
+                delay_temp=t_end;//本次间隔的终点
+                // Serial.print("temp == ");
+                // Serial.print(delay_temp);
+                delay_time=delay_temp-delay_begin;//时间间隔等于当前时间减去上一个点位的时间
+                //------------------------------------------------------------//
+                // Serial.print("delay_time ==");
+                // Serial.print(delay_time);
+                //-------------------------------------------------------------//
+                __delay__time.push_back(delay_time);
+                jae.push_back(encoders);
+                temp_back=jae.back();
+                speeds.push_back(temp_speeds);
+                //-------------------------------------------------------------------//
+                // Serial.print("time == ");
+                // Serial.print(__delay__time.back());
+                //-----------------------------------------------------------------------//
+                // for(int i=0;i<6;i++){
+                // Serial.print(" temp_back ==  ");
+                // Serial.print(temp_back[i]);
+                // Serial.print(" ");
+                // Serial.print("jae.size()=");
+                // Serial.print(jae.size());
+                // }
+            //  Serial.print("speed == ");
+            //  Serial.print(temp_speeds[i]);
+            //  Serial.print(" ");
+              }
         //Serial.println();
         if (gripper_state) {
             //unsigned long time = millis();
-            girrep_data[data_index] = myCobot.getEncoder(7);
+            girrep_data.push_back(myCobot.getEncoder(7));                                              //  girrep_data[data_index] = myCobot.getEncoder(7);
 #if defined MyCobot_Pro_350
         delay(5);
 #else
@@ -567,7 +606,7 @@ void MainControl::record(MyCobotBasic &myCobot)
 //            Serial.print("_encoder ");
 //            Serial.println(_encoder);
         }
-        rec_data_len++;
+        //rec_data_len++;//取消,取决于容器大小
         data_index++;
     }
     /*for (int i = 0; i < data_index; i++) {
@@ -641,7 +680,7 @@ void MainControl::play(MyCobotBasic &myCobot)
 
     while (1) {
         // play once
-        for (int index = 0 ; index < rec_data_len; index++) {
+        for (int index = 0 ; index < jae.size(); index++) {
             M5.update();
             if (!sync) {
                 myCobot.setEncoders(jae[index], 100);
@@ -667,6 +706,7 @@ void MainControl::play(MyCobotBasic &myCobot)
                           delay(60);
                       }*/
                   } else {
+                          delay(__delay__time[index]-20);
                           myCobot.setEncodersDrag(jae[index], speeds[index]);
                   }
             }
@@ -730,7 +770,7 @@ void MainControl::play(MyCobotBasic &myCobot)
         }
 
         // data too short
-        if (rec_data_len < 10) break;
+        if (jae.size() < 10) break;
 
         // quick loop
         if (M5.BtnC.wasReleased())break;
@@ -746,96 +786,96 @@ void MainControl::play(MyCobotBasic &myCobot)
  * Function: Play the track in the memory card
  */
 
-void MainControl::playFromFlash(MyCobotBasic &myCobot)
-{
-    M5.update();
-    MainControl::displayInfo(myCobot, GDataFlash);
+// void MainControl::playFromFlash(MyCobotBasic &myCobot)
+// {
+//     M5.update();
+//     MainControl::displayInfo(myCobot, GDataFlash);
 
-    // initialization first
-    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
-        //Serial.println("SPIFFS Mount Failed");
-        return;
-    }
+//     // initialization first
+//     if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
+//         //Serial.println("SPIFFS Mount Failed");
+//         return;
+//     }
 
-    //Serial.printf("Reading file: %s\r\n", FILENAME);
-    File file = SPIFFS.open(FILENAME);
-    if (!file || file.isDirectory()) {
-        //Serial.println("- failed to open file for reading");
-        return;
-    }
-    String this_line = "";
-    int index = 0;
+//     //Serial.printf("Reading file: %s\r\n", FILENAME);
+//     File file = SPIFFS.open(FILENAME);
+//     if (!file || file.isDirectory()) {
+//         //Serial.println("- failed to open file for reading");
+//         return;
+//     }
+//     String this_line = "";
+//     int index = 0;
 
-    int t1 = millis();
+//     int t1 = millis();
 
-    while (file.available()) {
-        char this_char = char(file.read());
-        this_line += this_char;
-        if (this_char == '\n') {
-            MyCobotSaver::saver_angles_enc sae_this;
-            sae_this = myCobot.saver.processStringIntoInts(this_line);
+//     while (file.available()) {
+//         char this_char = char(file.read());
+//         this_line += this_char;
+//         if (this_char == '\n') {
+//             MyCobotSaver::saver_angles_enc sae_this;
+//             sae_this = myCobot.saver.processStringIntoInts(this_line);
 
-            for (int jn = 0; jn < 6; jn++) {
-                jae[index][jn] = sae_this.joint_angle[jn];
-            }
-            girrep_data[index] = sae_this.joint_angle[6];
-            index ++;
-            this_line = "";
-        }
-        if (index > data_len_max) break;
-    }
+//             for (int jn = 0; jn < 6; jn++) {
+//                 jae[index][jn] = sae_this.joint_angle[jn];
+//             }
+//             girrep_data[index] = sae_this.joint_angle[6];
+//             index ++;
+//             this_line = "";
+//         }
+//         if (index > data_len_max) break;
+//     }
 
-    // update the len
-    rec_data_len = index - 1;
+//     // update the len
+//     rec_data_len = index - 1;
 
-    // play from flash
-    M5.update();
-    MainControl::displayInfo(myCobot, ui);
-    MainControl::play(myCobot);
-}
+//     // play from flash
+//     M5.update();
+//     MainControl::displayInfo(myCobot, ui);
+//     MainControl::play(myCobot);
+// }
 
-/*
- * Function: save the track to the memory card
- */
+// /*
+//  * Function: save the track to the memory card
+//  */
 
-void MainControl::recordIntoFlash(MyCobotBasic &myCobot)
-{
-    // recording data
-    MainControl::record(myCobot);
-    M5.update();
-    // show saving to recording
-    MainControl::displayInfo(myCobot, RecordSave);
+// void MainControl::recordIntoFlash(MyCobotBasic &myCobot)
+// {
+//     // recording data
+//     MainControl::record(myCobot);
+//     M5.update();
+//     // show saving to recording
+//     MainControl::displayInfo(myCobot, RecordSave);
 
-    // initialize flash
-    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
-        //Serial.println("SPIFFS Mount Failed");
-        return;
-    }
+//     // initialize flash
+//     if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
+//         //Serial.println("SPIFFS Mount Failed");
+//         return;
+//     }
 
-    // list exisiting files
-    myCobot.saver.listDir(SPIFFS, "/", 0);
+//     // list exisiting files
+//     myCobot.saver.listDir(SPIFFS, "/", 0);
 
-    // clean exsiting file
-    myCobot.saver.writeFile(SPIFFS, FILENAME, " ");
+//     // clean exsiting file
+//     myCobot.saver.writeFile(SPIFFS, FILENAME, " ");
 
-    // check time
-    File file = SPIFFS.open(FILENAME, FILE_APPEND);
+//     // check time
+//     File file = SPIFFS.open(FILENAME, FILE_APPEND);
 
-    for (int data_index = 0; data_index < rec_data_len; data_index ++) {
-        String data_output = "";
-        for (int l = 0; l < 6 ; l ++) {
-            data_output +=  jae[data_index][l];
-            data_output += ",";
-        }
-        data_output += girrep_data[data_index];
-        data_output += "\n";
-        file.print(data_output);
-    }
+//     for (int data_index = 0; data_index < rec_data_len; data_index ++) {
+//         String data_output = "";
+//         for (int l = 0; l < 6 ; l ++) {
+//             data_output +=  jae[data_index][l];
+//             data_output += ",";
+//         }
+//         data_output += girrep_data[data_index];
+//         data_output += "\n";
+//         file.print(data_output);
+//     }
 
-    // recover to original
-    ui = Menu;
-    MainControl::displayInfo(myCobot, ui);
-}
+//     // recover to original
+//     ui = Menu;
+//     MainControl::displayInfo(myCobot, ui);
+// }
 
 void MainControl::IO(MyCobotBasic &myCobot)
 {
@@ -846,7 +886,7 @@ void MainControl::IO(MyCobotBasic &myCobot)
         MainControl::displayInfo(myCobot, 51);
         delay(error_display_time);
 
-        ui = PlayFlash;
+        //ui = PlayFlash;
         MainControl::play(myCobot);
     }
 }

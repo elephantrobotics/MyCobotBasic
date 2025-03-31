@@ -6,7 +6,7 @@ bool confirmRequestPending{false};
 xSemaphoreHandle xSemap;
 bool deviceConnected = false;
 string ble_data;
-
+    
 void Transponder::init()
 {
     pinMode(15, OUTPUT);
@@ -31,7 +31,7 @@ void Transponder::init()
     info();
 }
 
-void Transponder::run(MyPalletizerBasic &myCobot)
+void Transponder::run(MyCobotBasic &myCobot)
 {
     init();
     EXIT = false;
@@ -99,7 +99,7 @@ bool Transponder::HandleAtomData(vector<unsigned char> &v_data)
 /*
  * Function:Response to button events
  */
-void Transponder::EventResponse(MyPalletizerBasic &myCobot)
+void Transponder::EventResponse(MyCobotBasic &myCobot)
 {
     while (!EXIT) {
         M5.update();
@@ -120,13 +120,14 @@ void Transponder::EventResponse(MyPalletizerBasic &myCobot)
             M5.update();
             switch ((transponder_mode = (enum MODE)distep.state)) {
                 case Uart: {
+                   Serial.print(BAUD_RATE);
                     rFlushSerial();
                     data_power = true;
                     connect_ATOM(myCobot);
                     while (true) {
                         M5.update();
                         if (M5.BtnC.wasReleased()) {
-                            myCobot.jogStop();
+      //                      myCobot.jogStop();
                             data_power = false;
                             info();
                             break;
@@ -157,7 +158,7 @@ void Transponder::EventResponse(MyPalletizerBasic &myCobot)
                         }
                         //No click event response on timeout
                         if (M5.BtnC.wasReleased() && !is_timeout) {
-                            myCobot.jogStop();
+      //                      myCobot.jogStop();
                             data_power = false;
                             info();
                             break;
@@ -182,6 +183,7 @@ void Transponder::EventResponse(MyPalletizerBasic &myCobot)
                     BTWaitInfo();
                     while (true) {
                         m5.update();
+#if defined MyCobot || defined MyCobot_Pro_350 || defined MechArm || defined MyArm750
                         if (deviceConnected && !loop_on) {
                             BTConnectedInfo();
                             loop_on = true;
@@ -199,9 +201,27 @@ void Transponder::EventResponse(MyPalletizerBasic &myCobot)
                         if (deviceConnected && !oldDeviceConnected) {
                             oldDeviceConnected = deviceConnected;
                         }
-                        
+#else
+                        if (SerialBT.hasClient() && !loop_on) {
+                            BTConnectedInfo();
+                            //If already connected, neither discoverable nor connectable
+                            esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE,
+                                                     ESP_BT_NON_DISCOVERABLE);
+                            loop_on = true;
+                        } else if (!SerialBT.hasClient() && loop_on) {
+                            BTWaitInfo();
+                            esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
+                            loop_on = false;
+                        }
+                        if (confirmRequestPending) {
+                            if (M5.BtnA.wasReleased()) {
+                                SerialBT.confirmReply(true);
+                            }
+                        }
+
+#endif
                         if (M5.BtnC.wasReleased()) {
-                            myCobot.jogStop();
+                            //myCobot.jogStop();
                             data_power = false;
                             info();
                             break;
@@ -209,8 +229,13 @@ void Transponder::EventResponse(MyPalletizerBasic &myCobot)
                         delay(1);
                     }
                 }
+#if defined MyCobot || defined MyCobot_Pro_350 || defined MechArm || defined MyArm750
                 pServer->getAdvertising()->stop();
                 pService->stop();
+                //pServer = NULL;
+#else
+                SerialBT.end();
+#endif
                 break;
                 case Exit:
                     BLEDevice::deinit(false);
@@ -229,13 +254,18 @@ void Transponder::GetUserData(vector<unsigned char> &data)
 {
     if (transponder_mode == Uart) {
         while (Serial.available() > 0) {
+            if (data.size() > 200)
+                return;
             data.push_back((char)Serial.read());
         }
     } else if (transponder_mode == Wlan) {
         while (serverClients[0].available() > 0) {
+            if (data.size() > 200)
+                return;
             data.push_back((char)serverClients[0].read());
         }
     } else if (transponder_mode == Bt) {
+#if defined MyCobot || defined MyCobot_Pro_350 || defined MechArm || defined MyArm750
         if (deviceConnected && ble_data.length() > 0) {
             for (int i = 0; i < ble_data.length(); ++i) {
                 data.push_back((char)ble_data[i]);
@@ -244,7 +274,11 @@ void Transponder::GetUserData(vector<unsigned char> &data)
             // Serial.println();
             ble_data = "";
         }
-
+#else
+        while (SerialBT.available() > 0) {
+            data.push_back((char)SerialBT.read());
+        }
+#endif
     }
     return;
 }
@@ -256,15 +290,25 @@ void Transponder::GetUserData(string &data)
 {
     if (transponder_mode == Uart) {
         while (Serial.available() > 0) {
+            if (data.size() > 200)
+                return;
             data += (char)Serial.read();
         }
     } else if (transponder_mode == Wlan) {
         while (serverClients[0].available() > 0) {
+            if (data.size() > 200)
+                return;
             data += (char)serverClients[0].read();
         }
     } else if (transponder_mode == Bt) {
+#if defined MyCobot || defined MyCobot_Pro_350  || defined MechArm || defined MyArm750
         if (deviceConnected && ble_data.length() > 0)
             data = ble_data;
+#else
+        while (SerialBT.available() > 0) {
+            data += (char)SerialBT.read();
+        }
+#endif
     }
     return;
 }
@@ -280,6 +324,9 @@ void Transponder::GetAtomData(vector<unsigned char> &data)
     }
 
     while (Serial2.available() > 0) {
+        //if data too many,will over size
+        if (data.size() > 200)
+            return;
         data.push_back(Serial2.read());
     }
     return;
@@ -385,6 +432,15 @@ bool Transponder::HandleOtherMsg(vector<unsigned char> &v_data)
         case 3:
             switch (v_data[3]) {
                 case SET_COMMUNICATE_MODE: {
+#ifdef MyCobot_Pro_350
+                    /*int mode = 0;
+                    if (v_data[4] == 1)
+                        mode = 1;
+                    std::vector<uint8_t> cmd = {0xfe, 0xfe, 0x03, 0xd6, mode, 0xfa};
+                    SendDataToAtom(cmd);*/
+                    while(Serial2.read() != -1){}
+#endif
+                    Serial.println("ok--------------");
                     is_transparent_mode = v_data[4];
                 }
                 break;
@@ -471,7 +527,7 @@ void Transponder::SendDataToUser(vector<unsigned char> &v_data)
                         } else if (transponder_mode == Wlan) {
                             serverClients[0].write(temp.data(), (uint8_t)temp.size());
                         } else if (transponder_mode == Bt) {
-    #if defined MyCobot || defined MyCobot_Pro_350  || defined MechArm
+    #if defined MyCobot || defined MyCobot_Pro_350  || defined MechArm || defined MyArm750
                             if (deviceConnected) {
                                 pTxCharacteristic->setValue(temp.data(), (uint8_t)temp.size());
                                 pTxCharacteristic->notify();
@@ -497,10 +553,17 @@ void Transponder::SendDataToUser(const string str_data)
     } else if (transponder_mode == Wlan) {
         serverClients[0].write(str_data.c_str(), str_data.size());
     } else if (transponder_mode == Bt) {
+#if defined MyCobot || defined MyCobot_Pro_350  || defined MechArm || defined MyArm750
         if (deviceConnected) {
+    //      SerialBT.write((uint8_t *)str_data.c_str(), str_data.size());
+    //      pCharacteristic->setValue((uint8_t *)str_data.c_str(), str_data.size());
+    //      pCharacteristic->notify();
             pTxCharacteristic->setValue((uint8_t *)str_data.c_str(), str_data.size());
             pTxCharacteristic->notify();
         }
+#else
+        SerialBT.write((uint8_t *)str_data.c_str(), str_data.size());
+#endif
     }
 }
 
@@ -523,7 +586,7 @@ void Transponder::WriteData(int mode, vector<unsigned char> v_data)
         } else if (transponder_mode == Wlan) {
             serverClients[0].write(v_data.data(), (uint8_t)v_data.size());
         } else if (transponder_mode == Bt) {
-    #if defined MyCobot || defined MyCobot_Pro_350  || defined MechArm
+    #if defined MyCobot || defined MyCobot_Pro_350  || defined MechArm || defined MyArm750
                 if (deviceConnected) {
                     pTxCharacteristic->setValue(v_data.data(), (uint8_t)v_data.size());
                     pTxCharacteristic->notify();
@@ -598,7 +661,7 @@ void Transponder::UITemplate(vector<unsigned short> color,
 /*
  * Function: Get display Atom connection status
  */
-void Transponder::connect_ATOM(MyPalletizerBasic &myCobot)
+void Transponder::connect_ATOM(MyCobotBasic &myCobot)
 {
     M5.Lcd.clear(BLACK);
     delay(50);
@@ -772,8 +835,25 @@ void Transponder::SetBaud()
 
 }
 
+#if (!defined MyCobot) && (!defined MyCobot_Pro_350) && (!defined MechArm) && (!defined MyArm750)
+void BTConfirmRequestCallback(uint32_t numVal)
+{
+    confirmRequestPending = true;
+    Transponder::BTConnectingInfo(numVal);
+}
 
-
+void BTAuthCompleteCallback(boolean success)
+{
+    confirmRequestPending = false;
+    if (success) {
+        M5.Lcd.fillRect(10, 110, 260, 20, BLACK);
+        M5.Lcd.fillRect(10, 220, 60, 30, BLACK);
+        //Serial.println("Pairing success!!");
+    } else {
+        //Serial.println("Pairing failed, rejected by user!!");
+    }
+}
+#else
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
       deviceConnected = true;
@@ -791,11 +871,13 @@ class MyCallbacks: public BLECharacteristicCallbacks {
       ble_data = rxValue;
     }
 };
+#endif
 /*
  * Function: create a ble service
  */
 void Transponder::CreateBTServer()
 {
+#if defined MyCobot || defined MyCobot_Pro_350 || defined MechArm || defined MyArm750
     // Create the BLE Device
     BLEDevice::init(Bt_name);
     // Create the BLE Server
@@ -829,6 +911,14 @@ void Transponder::CreateBTServer()
     // Start advertising
     pServer->getAdvertising()->start();
     Serial.println("Waiting a client connection to notify...");
+#else
+    SerialBT.enableSSP();
+    SerialBT.onConfirmRequest(&BTConfirmRequestCallback);
+    SerialBT.onAuthComplete(&BTAuthCompleteCallback);
+    //Bluetooth device name
+    SerialBT.begin(Bt_name);
+    //Serial.println("The device started, now you can pair it with bluetooth!");
+#endif
     //get mac address
     esp_efuse_mac_get_default(mac_addr);
     mac_addr[5] += 2; //last addr need +2
@@ -847,8 +937,13 @@ void Transponder::BTWaitInfo()
     M5.Lcd.setTextSize(2);
     M5.Lcd.setCursor(10, 10);
     M5.Lcd.println(Bt_name.c_str());
+#if defined MyCobot || defined MyCobot_Pro_350 || defined MechArm || defined MyArm750
     UITemplate({WHITE, WHITE, WHITE, WHITE}, {2, 2, 2, 2}, {10, 10, 10, 230}, {80, 130, 170, 220},
     {"Bluetooth enabled", "BT Mac: ", "UUID: ", "Exit"}, {0, 0, 0, 1});
+#else
+    UITemplate({WHITE, WHITE, WHITE}, {2, 2, 2}, {10, 10, 230}, {80, 130, 220},
+    {"Bluetooth enabled", "BT Mac: ", "Exit"}, {0, 0, 1});
+#endif
     M5.Lcd.setCursor(100, 130);
     M5.Lcd.setTextSize(2);
     for (int i = 0; i < 6; i++) {
@@ -856,9 +951,11 @@ void Transponder::BTWaitInfo()
         if (i != 5)
             M5.Lcd.print(":");
     }
+#if defined MyCobot || defined MyCobot_Pro_350 || defined MechArm || defined MyArm750
     M5.Lcd.setCursor(75, 170);
     M5.Lcd.setTextSize(2);
     M5.Lcd.println(SERVICE_UUID);
+#endif
 }
 
 /*
@@ -866,6 +963,14 @@ void Transponder::BTWaitInfo()
  */
 void Transponder::BTConnectingInfo(uint32_t numVal)
 {
+#if (!defined MyCobot) && (!defined MyCobot_Pro_350) && (!defined MechArm) && (!defined MyArm750)
+     M5.Lcd.fillRect(10, 110, 260, 20, BLACK);
+     M5.Lcd.fillRect(10, 220, 60, 30, BLACK);
+     UITemplate({WHITE, WHITE}, {2, 2}, {20, 10}, {220, 110}, {"Pair", "Pairing code: "}, {1, 0});
+     M5.Lcd.setCursor(200, 110);
+     M5.Lcd.setTextSize(2);
+     M5.Lcd.print(numVal);
+#endif
 }
 
 /*
@@ -880,7 +985,11 @@ void Transponder::BTConnectedInfo()
     M5.Lcd.setTextSize(2);
     M5.Lcd.setCursor(10, 10);
     M5.Lcd.println(Bt_name.c_str());
+#if defined MyCobot || defined MyCobot_Pro_350 || defined MechArm || defined MyArm750
     UITemplate({WHITE, WHITE, WHITE, WHITE}, {2, 2, 2, 2}, {10, 10, 10, 230}, {80, 130, 170, 220}, {"A client connected", "BT Mac: ", "UUID: ", "Exit"}, {0, 0, 0, 1});
+#else
+    UITemplate({WHITE, WHITE, WHITE}, {2, 2, 2}, {10, 10, 230}, {80, 130, 220}, {"A client connected", "BT Mac: ", "Exit"}, {0, 0, 1});
+#endif
     M5.Lcd.setCursor(100, 130);
     M5.Lcd.setTextSize(2);
     for (int i = 0; i < 6; i++) {
@@ -888,9 +997,11 @@ void Transponder::BTConnectedInfo()
         if (i != 5)
             M5.Lcd.print(":");
     }
+#if defined MyCobot || defined MyCobot_Pro_350 || defined MechArm || defined MyArm750
     M5.Lcd.setCursor(75, 170);
     M5.Lcd.setTextSize(2);
     M5.Lcd.println(SERVICE_UUID);
+#endif
 }
 
 /*
@@ -913,5 +1024,4 @@ void Transponder::GetTOFDistance()
         }
     }
     tof.read_block_data_at(0x14, 12);
-    return;
 }

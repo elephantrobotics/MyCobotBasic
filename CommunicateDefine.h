@@ -114,7 +114,7 @@
 #define JOG_STOP_LEN                       2
 
 #define SET_ENCODER                        0x3A
-#define SET_ENCODER_LEN                    5
+#define SET_ENCODER_LEN                    6
 
 #define GET_ENCODER                        0x3B
 #define GET_ENCODER_LEN                    3

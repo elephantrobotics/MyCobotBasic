@@ -6,7 +6,6 @@
  */
 
 #include "MyCobotBasic.h"
-
 MyCobotBasic::MyCobotBasic()
 {
     for (auto &val : error_angles)
@@ -955,14 +954,14 @@ void MyCobotBasic::jogCoord(Axis axis, int direction, int speed)
     delay(WRITE_SERVO_GAP);
 }
 
-void MyCobotBasic::jogStop()
-{
-    mycobot_serial.write(header);
-    mycobot_serial.write(header);
-    mycobot_serial.write(JOG_STOP_LEN);
-    mycobot_serial.write(JOG_STOP);
-    mycobot_serial.write(footer);
-}
+// void MyCobotBasic::jogStop()
+// {
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(JOG_STOP_LEN);
+//     mycobot_serial.write(JOG_STOP);
+//     mycobot_serial.write(footer);
+// }
 
 void MyCobotBasic::clearServoQueue()
 {
@@ -972,11 +971,12 @@ void MyCobotBasic::clearServoQueue()
     mycobot_serial.write(CLEAR_SERVO_QUEUE);
     mycobot_serial.write(footer);
 }
-void MyCobotBasic::setEncoder(int joint, int encoder)
+void MyCobotBasic::setEncoder(int joint, int encoder, int speed)
 {
     byte joint_number = joint;
     byte encoder_high = highByte(encoder);
     byte encoder_low = lowByte(encoder);
+    byte current_speed = speed;
 
     mycobot_serial.write(header);
     mycobot_serial.write(header);
@@ -985,6 +985,7 @@ void MyCobotBasic::setEncoder(int joint, int encoder)
     mycobot_serial.write(joint_number);
     mycobot_serial.write(encoder_high);
     mycobot_serial.write(encoder_low);
+    mycobot_serial.write(current_speed);
     mycobot_serial.write(footer);
 }
 
@@ -1445,42 +1446,42 @@ void MyCobotBasic::setEncoders(Angles angleEncoders, int speed)
     mycobot_serial.write(footer);
 }
 
-int MyCobotBasic::getSpeed()
-{
-    mycobot_serial.write(header);
-    mycobot_serial.write(header);
-    mycobot_serial.write(GET_SPEED_LEN);
-    mycobot_serial.write(GET_SPEED);
-    mycobot_serial.write(footer);
+// int MyCobotBasic::getSpeed()
+// {
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(GET_SPEED_LEN);
+//     mycobot_serial.write(GET_SPEED);
+//     mycobot_serial.write(footer);
 
-    unsigned long t_begin = millis();
-    void *tempPtr = nullptr;
-    int *pSpeed = nullptr;
-    int speed;
+//     unsigned long t_begin = millis();
+//     void *tempPtr = nullptr;
+//     int *pSpeed = nullptr;
+//     int speed;
 
-    while (true) {
-        if (millis() - t_begin > 40)
-            break;
-        if (readData(a_invalid, speed, r_invalid, e_invalid, m_invalid) == -2)
-            continue;
-        else {
-            return speed;
-        }
-    }
+//     while (true) {
+//         if (millis() - t_begin > 40)
+//             break;
+//         if (readData(a_invalid, speed, r_invalid, e_invalid, m_invalid) == -2)
+//             continue;
+//         else {
+//             return speed;
+//         }
+//     }
 
-    return -1;
-}
+//     return -1;
+// }
 
-void MyCobotBasic::setSpeed(int percentage)
-{
-    byte speed = percentage;
-    mycobot_serial.write(header);
-    mycobot_serial.write(header);
-    mycobot_serial.write(SET_SPEED_LEN);
-    mycobot_serial.write(SET_SPEED);
-    mycobot_serial.write(speed);
-    mycobot_serial.write(footer);
-}
+// void MyCobotBasic::setSpeed(int percentage)
+// {
+//     byte speed = percentage;
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(header);
+//     mycobot_serial.write(SET_SPEED_LEN);
+//     mycobot_serial.write(SET_SPEED);
+//     mycobot_serial.write(speed);
+//     mycobot_serial.write(footer);
+// }
 
 /*
 float MyCobotBasic::getFeedOverride()
@@ -2476,4 +2477,59 @@ void MyCobotBasic::moveCCoords(Coords middle_coord, Coords end_coord)
     mycobot_serial.write(end_rz_high);
     mycobot_serial.write(end_rz_low);
     mycobot_serial.write(footer);
+}
+
+void setGripperState(int state, int sp, int type)
+{
+    int command_len = 5;
+    mycobot_serial.write(header);
+    mycobot_serial.write(header);
+    mycobot_serial.write(command_len);
+    mycobot_serial.write(SET_GRIPPER_STATE);
+    mycobot_serial.write(state);
+    mycobot_serial.write(sp);
+    mycobot_serial.write(type); 
+    mycobot_serial.write(footer); 
+}
+
+void setGripperState(int state, int sp, int type, int  is_torque)
+{
+    int command_len = 6;
+    mycobot_serial.write(header);
+    mycobot_serial.write(header);
+    mycobot_serial.write(command_len);
+    mycobot_serial.write(SET_GRIPPER_STATE);
+    mycobot_serial.write(state);
+    mycobot_serial.write(sp);
+    mycobot_serial.write(type); 
+    mycobot_serial.write(is_torque); 
+    mycobot_serial.write(footer); 
+}
+
+void setGripperValue(int value, int sp, int type = 1)
+{
+    int command_len = 5;
+    mycobot_serial.write(header);
+    mycobot_serial.write(header);
+    mycobot_serial.write(command_len);
+    mycobot_serial.write(SET_GRIPPER_VALUE);
+    mycobot_serial.write(value);
+    mycobot_serial.write(sp);
+    mycobot_serial.write(type);
+    mycobot_serial.write(footer); 
+}
+
+
+void setGripperValue(int value, int sp, int type ,int is_torque)
+{
+    int command_len = 6;
+    mycobot_serial.write(header);
+    mycobot_serial.write(header);
+    mycobot_serial.write(command_len);
+    mycobot_serial.write(SET_GRIPPER_VALUE);
+    mycobot_serial.write(value);
+    mycobot_serial.write(sp);
+    mycobot_serial.write(type);
+    mycobot_serial.write(is_torque);
+    mycobot_serial.write(footer); 
 }

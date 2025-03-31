@@ -2,10 +2,11 @@
 #define PARAMETERLIST_H
 
 //默认mycobot，用哪一款机械臂，就打开注释，
-#define MyCobot "mycobot"
+// #define MyCobot "mycobot"
 // #define MechArm "mecharm"
 //#define MyCobot_Pro "mycobot pro" //old mycobot320-2020 use
-// #define MyCobot_Pro_350 //new mycobot320 use
+//#define MyCobot_Pro_350 //new mycobot320 use
+#define MyArm750 //MyArmM use
 
 #define MyCobot_M5 "m5"  //To use non-MyCobot280-m5 robotic arms, you need to comment out this line
 //#define MyCobot_Mega "mega"   //if use non-mega,you need to should comment out this line
@@ -67,9 +68,9 @@ namespace myCobotDefine
 
     // robotic data struct
     enum Axis : int { X = 0, Y, Z, RX, RY, RZ };
-    enum Joint : int { J1 = 0, J2, J3, J4, J5, J6 };
+    enum Joint : int { J1 = 0, J2, J3, J4, J5, J6, J7, J8 };
     constexpr const int Axes = 6;
-    constexpr const int Joints = 6;
+    constexpr const int Joints = 8;
     using Coords = std::array<float, Axes>;
     using Angles = std::array<float, Joints>;
 
@@ -127,9 +128,6 @@ namespace myCobotDefine
         float poseture[3];
         float quaternion[4];
     };
-
-
-
 }
 
 namespace roboticMessages
