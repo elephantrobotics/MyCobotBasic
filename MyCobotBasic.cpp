@@ -2479,7 +2479,7 @@ void MyCobotBasic::moveCCoords(Coords middle_coord, Coords end_coord)
     mycobot_serial.write(footer);
 }
 
-void setGripperState(int state, int sp, int type)
+void MyCobotBasic::setGripperState(int state, int sp, int type)
 {
     int command_len = 5;
     mycobot_serial.write(header);
@@ -2492,7 +2492,7 @@ void setGripperState(int state, int sp, int type)
     mycobot_serial.write(footer); 
 }
 
-void setGripperState(int state, int sp, int type, int  is_torque)
+void MyCobotBasic::setGripperState(int state, int sp, int type, int  is_torque)
 {
     int command_len = 6;
     mycobot_serial.write(header);
@@ -2506,7 +2506,7 @@ void setGripperState(int state, int sp, int type, int  is_torque)
     mycobot_serial.write(footer); 
 }
 
-void setGripperValue(int value, int sp, int type = 1)
+void MyCobotBasic::setGripperValue(int value, int sp, int type = 1)
 {
     int command_len = 5;
     mycobot_serial.write(header);
@@ -2520,7 +2520,7 @@ void setGripperValue(int value, int sp, int type = 1)
 }
 
 
-void setGripperValue(int value, int sp, int type ,int is_torque)
+void MyCobotBasic::setGripperValue(int value, int sp, int type ,int is_torque)
 {
     int command_len = 6;
     mycobot_serial.write(header);
